@@ -12,5 +12,9 @@ class TorrentStatus:
         self.up_speed = status.upload_rate
         self.state = self.STATE_STR[status.state]
 
-    def time_left(self):
+    def progress_perc(self):
+        return self.progress * 100
+    
+    def time_left_sec(self):
         return (self.total_wanted * (1 - self.progress)) / self.download_rate
+    

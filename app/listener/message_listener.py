@@ -30,22 +30,26 @@ class MessageListener:
         self.telebot_service.stop_bot()
 
     def _handle_torrent_download(self, message: Message):
+        reply = self.telebot_service.reply_to(message=message,reply="Starting")
         text = TelebotUtil.getMessageText(message=message)
         link = TelebotUtil.extractLink(text=text)
         if(link):
-            reply = self.telebot_service.reply_to(message=message,reply="Starting")
+            self.telebot_service.edit_message(message=reply,edit_text="Downloading Metadata...")
             try:
                 handle = self.torrent_service.download(link=link)
             except NoSourceFound as e:
                 self.telebot_service.edit_message(message=reply,edit_text="No download source found")
             except NoMetadataFound as e:
                 self.telebot_service.edit_message(message=reply,edit_text="Unable to fetch metadata")
-            
+
             if(handle):
+                name = handle.name()
+                self.telebot_service.edit_message(message=reply,edit_text="Got Metadata, Starting Torrent Download...\n\nUploading: {name}")
                 for status in self.torrent_service.status_handler(handle=handle):
-                    self.telebot_service.edit_message(message=reply,edit_text="Downloading {%s}" % status.progress)
+                    msg = TelebotUtil.format_torrent_status(status=status,name=name)
+                    self.telebot_service.edit_message(message=reply,edit_text=msg)
                 else:
                     self.telebot_service.delete_message(reply)
-                    self.telebot_service.send_message(message.chat.id,"Upload COMPLETED\n\n{0}\nCheck Here : {1}\n\n\nReady To Go Again".format(handle.name(), 'gdlink'))
-        
-        # self.telebot_service.send_message(message.chat.id,"Shutting Down")
+                    self.telebot_service.send_message(message=message,text="Upload COMPLETED\n\n{0}\nCheck Here : {1}\n\n\nReady To Go Again".format(handle.name(), 'gdlink'))
+        else:
+            self.telebot_service.edit_message(message=reply,edit_text="No download link found")
