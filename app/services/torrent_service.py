@@ -3,6 +3,7 @@ from typing import Generator
 import libtorrent as lt
 import time
 from app.models.torrent_status import TorrentStatus
+from app.exceptions.torrent_exception import NoSourceFound, NoMetadataFound
 
 class TorrentService:
 
@@ -23,7 +24,7 @@ class TorrentService:
         try:
             handle = lt.add_magnet_uri(self.session, link, self.params)
         except Exception:
-            return None
+            raise NoSourceFound(message="No download sounce found")
         self.session.start_dht()
 
         for count in range(10):
@@ -32,7 +33,7 @@ class TorrentService:
             else:
                 break
         else:
-            return None
+            raise NoMetadataFound(message="Unable to fetch metadata")
         return handle
     
     def status_handler(self, handle: lt.torrent_handle, refresh: int | None = None) -> Generator[TorrentStatus, None, TorrentStatus]:

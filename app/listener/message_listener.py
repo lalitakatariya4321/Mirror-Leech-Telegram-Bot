@@ -4,8 +4,7 @@ from app.utils.telebot_util import TelebotUtil
 from app.services.telebot_service import TelebotService
 from telebot.types import Message
 from app.settings.config import Config
-from libtorrent import torrent_handle
-from app.models.torrent_status import TorrentStatus
+from app.exceptions.torrent_exception import NoSourceFound, NoMetadataFound
 
 class MessageListener:
     def __init__(self, config: Config):
@@ -34,10 +33,19 @@ class MessageListener:
         text = TelebotUtil.getMessageText(message=message)
         link = TelebotUtil.extractLink(text=text)
         if(link):
-            handle = self.torrent_service.download(link=link)
+            reply = self.telebot_service.reply_to(message=message,reply="Starting")
+            try:
+                handle = self.torrent_service.download(link=link)
+            except NoSourceFound as e:
+                self.telebot_service.edit_message(message=reply,edit_text="No download source found")
+            except NoMetadataFound as e:
+                self.telebot_service.edit_message(message=reply,edit_text="Unable to fetch metadata")
+            
             if(handle):
                 for status in self.torrent_service.status_handler(handle=handle):
-                    status: TorrentStatus
-                    self.telebot_service.reply_to(message=message,reply="Downloading %s}" % status.progress)
-        pass
+                    self.telebot_service.edit_message(message=reply,edit_text="Downloading {%s}" % status.progress)
+                else:
+                    self.telebot_service.delete_message(reply)
+                    self.telebot_service.send_message(message.chat.id,"Upload COMPLETED\n\n{0}\nCheck Here : {1}\n\n\nReady To Go Again".format(handle.name(), 'gdlink'))
+        
         # self.telebot_service.send_message(message.chat.id,"Shutting Down")
