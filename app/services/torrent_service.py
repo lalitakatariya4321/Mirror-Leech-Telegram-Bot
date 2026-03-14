@@ -1,4 +1,5 @@
 # import libtorrent
+import logging
 from typing import Generator
 import libtorrent as lt
 import time
@@ -6,12 +7,15 @@ from app.models.torrent_status import TorrentStatus
 from app.exceptions.torrent_exception import NoSourceFound, NoMetadataFound
 
 class TorrentService:
+    
+    DEFAULT_PATH = "./downloads"
 
     def __init__(self, save_path: str):
         self.session = lt.session()
         self.session.listen_on(6881, 6891)
+        print(f"Storage path: {save_path}")
         self.params = {
-            'save_path': save_path,
+            'save_path': save_path if save_path else self.DEFAULT_PATH,
             'storage_mode': lt.storage_mode_t(2)
         }
         pass

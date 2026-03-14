@@ -54,7 +54,7 @@ class MessageListener:
                     self.telebot_service.edit_message(message=reply,edit_text=msg)
                 else:
                     self.telebot_service.delete_message(reply)
-                    msg = f"✅ Upload COMPLETED\n\n{name}{f"\nCheck Here :{self.path_link}" if(self.path_link) else ''}\n\nReady To Go Again"
+                    msg = f"✅ Upload COMPLETED\n\n{name}\n{f'\nCheck Here : {self.path_link}' if(self.path_link) else ''}\n\nReady To Go Again"
                     self.telebot_service.send_message(message=message,text=msg)
         else:
             self.telebot_service.edit_message(message=reply,edit_text="No download link found")
